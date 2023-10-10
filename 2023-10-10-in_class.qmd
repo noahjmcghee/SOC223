@@ -1,0 +1,52 @@
+---
+title: "23-10-10"
+format: html
+editor: visual
+---
+
+```{r}
+#| message: false
+library(tidyverse)
+library(moderndive)
+library(patchwork)
+theme_set(theme_light())
+```
+
+```{r}
+#| echo: false
+data(evals)
+head(evals)
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+Visualizing correlation between minority/non-minority and beauty and exploring correlation between age and beauty.
+
+```{r}
+ggplot(evals,
+       aes(x = bty_avg,
+           y = ethnicity)) +
+  geom_boxplot(coef = 0,
+               outlier.alpha = 0,
+               width = .5) +
+  geom_jitter(alpha = .5,
+              height = .2)
+
+
+
+evals |> get_correlation(age ~ bty_avg)     
+evals|> select(age, bty_avg) |> cor()
+
+mod1 <- lm(age ~ bty_avg,
+           data = evals)
+
+get_regression_table(mod1)
+
+ggplot(evals,
+       aes(x = bty_avg,
+           y = age)) +
+  geom_jitter(alpha = .3) +
+  geom_smooth(method = "lm",
+              se = FALSE) 
+
+```
