@@ -1,0 +1,196 @@
+# Homework 6.2
+
+For this assignment you are going to use the `bikes` dataset we began analyzing in class. You can get that dataset from the **bayesrules** package. Once **bayesrules** is installed, you can begin.
+
+```{r}
+#| message: false
+library(tidyverse)
+library(moderndive)
+theme_set(theme_minimal())
+```
+
+Load the data and take a look.
+
+
+```{r}
+data(bikes, package = "bayesrules")
+glimpse(bikes)
+max(bikes$rides)
+max(bikes$windspeed)
+```
+
+```
+## Rows: 500
+## Columns: 13
+## $ date        <date> 2011-01-01, 2011-01-03, 2011-01-04, 2011-01-05, 2011-01-0…
+## $ season      <fct> winter, winter, winter, winter, winter, winter, winter, wi…
+## $ year        <int> 2011, 2011, 2011, 2011, 2011, 2011, 2011, 2011, 2011, 2011…
+## $ month       <fct> Jan, Jan, Jan, Jan, Jan, Jan, Jan, Jan, Jan, Jan, Jan, Jan…
+## $ day_of_week <fct> Sat, Mon, Tue, Wed, Fri, Sat, Mon, Tue, Wed, Thu, Fri, Sat…
+## $ weekend     <lgl> TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALS…
+## $ holiday     <fct> no, no, no, no, no, no, no, no, no, no, no, no, no, yes, n…
+## $ temp_actual <dbl> 57.39952, 46.49166, 46.76000, 48.74943, 46.50332, 44.17700…
+## $ temp_feel   <dbl> 64.72625, 49.04645, 51.09098, 52.63430, 50.79551, 46.60286…
+## $ humidity    <dbl> 80.5833, 43.7273, 59.0435, 43.6957, 49.8696, 53.5833, 48.2…
+## $ windspeed   <dbl> 10.749882, 16.636703, 10.739832, 12.522300, 11.304642, 17.…
+## $ weather_cat <fct> categ2, categ1, categ1, categ1, categ2, categ2, categ1, ca…
+## $ rides       <int> 654, 1229, 1454, 1518, 1362, 891, 1280, 1220, 1137, 1368, …
+```
+
+## Question 0
+
+Before analyzing a dataset, it's good to know some stuff about it. Answer the following questions:
+
+* how many rows are in the dataset?
+500
+* what does each row represent?
+entry
+* what dates does the dataset cover?
+Jan 1 2011 - Dec 31 2012
+* what is the highest observed ridership in the dataset?
+6946
+* what was the highest wind speed recorded in the dataset?
+34.00002
+
+## Question 1
+
+What is the correlation between number of rides and what the temperature feels like (in Fahrenheit)? What is the correlation between the number of rides and wind speed (miles per hour)?
+
+```{r}
+mod1 <- lm(rides ~ temp_feel, data = bikes)
+broom::glance(mod1)
+
+mod2 <- lm(rides ~ windspeed, data = bikes)
+broom::glance(mod2)
+```
+
+## Question 2
+
+Using the approximation that a mile is equal to 1.61 kilometers, convert `windspeed` to kilometers per hour. Call the new variable `wind_kph` and add it to the `bikes` data frame. What is the correlation between wind speed in MPH and wind speed in KPH? Explain why in enough detail that I know you understand.
+
+```{r}
+bikes <- bikes %>% mutate(wind_kph = windspeed * 1.61)
+
+mod3 <- lm(windspeed ~ wind_kph, data = bikes)
+broom::glance(mod3)
+```
+
+1. There is a direct conversion from miles to kms which alows for no variance. If that was not the case then 1 mile could equal 1.5 - 1.7 kms for example.
+
+## Question 3
+
+Estimate two simple regressions:
+
+* predict rides as a function of wind speed in MPH
+* predict rides as a function of wind speed in KPH
+
+Use `get_regression_table()` or `broom::tidy()` to display the results. This will give you two sets of an intercept and a slope. If any coefficients are the same between models, explain why. If any coefficients are different between models, explain why. Make sure to give me enough detail to convince me you understand.
+
+```{r}
+mod4 <- lm(rides ~ windspeed, data = bikes)
+broom::tidy(mod4)
+```
+
+```{r}
+mod5 <- lm(rides ~ wind_kph, data = bikes)
+broom::tidy(mod5)
+```
+
+
+The intercepts are the same and the slopes are diffenrent which is expected. The slope of 'wind_kph' should be 1.61 times the slope of 'windspeed' because the conversion from miles to kms should be baked into that slope. The intercept is the same because the number of rides is the same. 
+
+Proof
+```{r}
+-55.52268/-34.48614	
+```
+
+## Question 4
+
+Using the models from above, tell me what the predicted ridership would be if the wind is blowing at 20 KPH. What would the predicted ridership be if the wind is blowing at 20 MPH?
+
+```{r}
+4205.065 + -34.486 * 20
+
+4205.065 + -55.523 * 20
+```
+20 KPH > 3515.345
+20 MPH > 3094.605
+
+
+## Question 5
+
+Let's get more realistic and move to multiple regression. We're going to use `temp_feel` in addition to wind speed. But we don't want to use Fahrenheit. So make a new variable called `temp_c` that is a conversion of `temp_feel` to Celsius and add it to the `bikes` dataframe. (You may have to look up how to do this conversion.)
+
+With this new variable, estimate a multiple regression that predicts rides as an additive function of `wind_kph` and `temp_c` (that is, no interaction). Interpret both of the slope coefficients using the following language:
+
+"For a _____ increase in _____, the model expects a _____ increase in _____."
+
+Now interpret the intercept.
+
+```{r}
+bikes <- bikes %>% mutate(temp_c = (temp_feel - 32)/(9/5) )
+
+mod6 <- lm(rides ~ wind_kph + temp_c, data = bikes)
+broom::tidy(mod6)
+```
+For a 1kph increase in wind_kph, the model expects a -19.84224 increase in rides.
+For a 1C increase in temp_c, the model expects a 143.23421 increase in rides.
+
+
+## Question 6
+
+Using the multiple regression you just estimated, give me ridership predictions for the following situations:
+
+* SITUATION 1: temp = 25C, wind = 15 KPH
+* SITUATION 2: temp = 15C, wind = 5 KPH
+* SITUATION 3: temp = 10C, wind = 40 KPH
+
+You can do this manually (using R as a calculator) or you might find the following code useful. I'm not going to give you *all* the code, but this is a head start!
+
+
+```{r}
+pred_df <- tibble(
+  situation = 1:3,
+  temp_c = c(25, 15, 10),
+  wind_kph = c(15, 5, 40),)
+  
+df <- pred_df %>% mutate(rides = (942.42575	+ temp_c*143.23421 + wind_kph*-19.84224))
+df
+```
+
+## Question 7
+
+Let's add another predictor into the mix. Estimate a new model that uses `weekend` in addition to the predictors already in the model. Display the model results. Interpret the coefficient on `weekend` using a complete sentence.
+
+```{r}
+mod7 <- lm(rides ~ wind_kph + temp_c + weekend, data = bikes)
+broom::tidy(mod7)
+```
+WeekendTRUE is either yes or no interpreted in the model as either 1 or 0. In this case, if it is the weekend then it will then it will be 0 x -713.57504 and alternativeley if it is not the weekend then it will be 1 x -713.57504. Therefore, it being ther weekend shows an increase in rides and the opposite for weekdays.
+
+## Question 8
+
+If the temperature and the wind speed are average, what is the expected ridership for a weekend day? What is the expected ridership for a weekday? Show the code that gets you your answers.
+
+```{r}
+1214.80251 + mean(bikes$wind_kph) * -20.38598 + mean(bikes$temp_c) * 140.33863 + 0 * -713.57504	
+1214.80251 + mean(bikes$wind_kph) * -20.38598 + mean(bikes$temp_c) * 140.33863 + 1 * -713.57504	
+```
+Weekend rides for avg. wind and temp > 3683.442
+Weekday rides for avg. wind and temp > 2969.867
+
+
+## Question 9
+
+You can use `get_regression_points()` or `predict()` to see how the model did at predicting each individual value of `rides`. Use one of these functions to find the date with the _largest absolute residual_. That is, find the day where the model is most wrong about predicted ridership. Why is the model so wrong about this day? (There is a correct answer here.)
+
+```{r}
+q9 <- get_regression_points(mod7)
+q9 <- q9 %>% mutate(abs_resid = abs(q9$residual))
+q9[q9$abs_resid == max(q9$abs_resid),]
+bikes[bikes$rides == 5665, ]
+bikes <- bikes %>% mutate(real_vs_feel = (((temp_actual - temp_feel)  - 32)/(9/5)))
+bikes[bikes$real_vs_feel == max(bikes$real_vs_feel),]
+```
+The day with the largest residual also happens to coincide with the largest difference between actual temp and the temp it feels. The model only takes into acout the feels like temp which was 53.816F that day, which is moderately cold. However, the actual temp was 85.382 which is warm likely leading to significantly more riders than predicted by the model.
+
