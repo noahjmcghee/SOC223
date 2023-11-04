@@ -1,0 +1,15 @@
+---
+title: "project-idea"
+format: html
+editor: visual
+---
+
+## Project Idea
+
+I want to study how socioeconomics and education standards in a state predict active duty military recruiting in that state. Using data that compiles active duty recruiting numbers as well as data such as race, sex, AFQT scores, and education level in tandem with an educational and socioeconomic datasets that ranks states by their educational proficiency and residents economic security. Overall, the goal is to see if there is a trend between a state's education standards and their recruiting levels but other questions could be explored such as which socioeconomics factors correlate best with recruiting numbers.
+
+Tentative dataset : https://www.cna.org/pop-rep/2019/appendixb/appendixb.pdf,
+
+https://worldpopulationreview.com/state-rankings/best-states-for-education,
+
+https://www.usnews.com/news/best-states/rankings/opportunity/economic-opportunity
