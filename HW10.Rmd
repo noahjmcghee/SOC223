@@ -1,0 +1,117 @@
+# Chapter 10  
+
+For the last set of complementary exercises, we will go to one of the topics that have made data analysis and statistics famous: baseball. Now, I am far from an expert in baseball, but the wealth of data that the game provides makes it a space of almost endless possibilities for folks who are interested in that sort of thing. 
+
+Chapter 10 brings some of the ideas about hypothesis testing into the realm of regression. We will review these ideas. Here, we will be looking at pitchers' data. Specifically, we are going to be looking at variables that might predict pitchers' performance. Our variable for pitchers' performance will be ERA - Earned Run Average. This basically means: how many runs did you allow your opponents to score (per nine innings). The implication is that a lower ERA means a better pitching performance. 
+
+Let's read in and glimpse the data. 
+
+
+```{r}
+#| message: false
+library(tidyverse)
+library(broom)
+library(moderndive)
+pitchers <- read_csv("https://raw.githubusercontent.com/vaiseys/dav-course/main/Data/Pitching.csv")
+glimpse(pitchers)
+```
+
+
+We have a wealth of data. If you are interested, I got this data from the amazing Lahman Database, which is truly an astounding resource. In our dataset each row represents the career stats of a player. Here, we are going to be interested in just three variables: `ERA`, `BAopp`, `WP`. The first we already covered. The last two represent the opponents' batting average and wild pitches respectively. Wild pitches are throws that were not caught by the catcher (at the pitcher's fault) *and* that caused someone to advance a base. 
+
+One thing you might notice is that we have a fair amount of `NA`s in our variables of interest. Let's get rid of those before we start our analysis. 
+
+
+```{r}
+pitchers_cln <- pitchers %>% 
+  select(ERA, BAOpp, WP) %>% 
+  drop_na()
+
+pitchers_cln
+```
+
+## Question 1 
+
+What does it mean to start thinking of the fitted intercept and slope of a regression as point estimates? Why does this introduce uncertainty? 
+
+It fits the data to a model, however, it's very unlikely the model will perfectly emulate the data. The uncertainty describes the models inability to predict estimates within a specified tolerance, in other words, how likely the model is to return an unreasonable value.
+
+## Question 2 
+
+What is the number that quantifies that uncertainty? 
+
+Standard error 
+
+> Hint: it is the standard deviation of a point estimate. 
+
+## Question 3 
+
+Okay, let's dive right in. Run a linear regression with `ERA` as an outcome variable as `BAopp` as the explanatory variable. Save it as `model1`. 
+
+Using `tidy()` describe your results. Does the coefficient make sense? Is the relationship what you expected? 
+
+```{r}
+model1 <- lm(BAOpp ~ ERA, data = pitchers_cln)
+tidy(model1)
+
+
+```
+
+## Question 4 
+
+Examine the standard error. Describe it in a few sentences. Are you confident in the result?
+
+The standard errors for both statistics are both low, especially for the slope value implying the estimates from the model are similar to the sctual data. Given this information I should be confident, however, it is still possible this model does not tell the full story of the data.
+
+## Question 5
+
+Examine the p-value. What does it imply about the confidence we can have in our results?
+
+The p-values for both statistics are below .05, by orders of magnitude, implying that that the model is reasonably accurate. 
+
+## Question 6 
+
+Let's do an exercise that will test your skills a bit. Write a script that samples 30 pitchers and run the same analysis. Save these results as `model2`. 
+
+Now, do the same with 100 and 1000 pitchers. Name these models, `model3` and `model4` respectively. 
+
+```{r}
+p_30 <- sample_n(pitchers_cln, 30, replace = T)
+p_100 <- sample_n(pitchers_cln, 100, replace = T)
+p_1000 <- sample_n(pitchers_cln, 1000, replace = T)
+
+model2 <- lm(BAOpp ~ ERA, data = p_30)
+tidy(model2)
+
+model3 <- lm(BAOpp ~ ERA, data = p_100)
+tidy(model3)
+
+model4 <- lm(BAOpp ~ ERA, data = p_1000)
+tidy(model4)
+
+```
+
+Examine the p-values of each of the models. What can you notice? 
+
+Though the particular iteration may not reflect the trend you would expect to see the p-values increase as the sample size increases.
+
+This should also be a cautionary tale. Huge samples offer the "benefit" of almost guaranteed infinitesimally small p-values. In the age of Big Data, this means that any person can take a huge dataset, make a silly argument, and call it statistically significant. 
+
+## Question 7 
+
+Another cautionary tale to end the course. 
+
+Run a linear regression with `ERA` as an outcome variable as `WP` as the explanatory variable. Examine the results using `tidy()`. 
+
+```{r}
+model5 <- lm(ERA ~ WP, data = pitchers_cln)
+tidy(model5)
+
+```
+
+Presumably, these results are fairly counterintuitive. Wild pitches are related to better performance. 
+
+Why can that be? It might mean that more reckless pitchers are actually better. Perhaps, they are more unpredictable. A far more plausible interpretation however is that pitchers who take more risks are both more likely to get wild pitches and more likely to succeed. 
+
+Now, we don't know what the correct explanation is. This is the lesson here. We have a really strong relationship with an infinitesimally small p-value. In the world of mindless data analysis, we have struck gold. However, even in this beautiful scenario, we have multiple stories that are consistent with our results. P-values are never a sign that something is *causing* something else or that a variable is a key part of an explanatory mechanism. They are simply a way of describing the uncertainty around a point estimate, **conditional** on the model you have fitted. Next time someone tells you a big story around a coefficient just because it is *statistically significant*, we hope you have a question or two. 
+
