@@ -1,0 +1,51 @@
+state,eo_rank
+Maine,26
+New Hampshire,1
+Vermont,8
+Massachusetts,13
+Rhode Island,16
+Connecticut,19
+New York,39
+New Jersey,10
+Pennsylvania,25
+Ohio,35
+Indiana,22
+Illinois,29
+Michigan,33
+Wisconsin,15
+Minnesota,2
+Iowa,12
+Missouri,37
+North Dakota,14
+South Dakota,17
+Nebraska,20
+Kansas, 28
+Delaware,21
+Maryland,3
+Virginia,9
+West Virginia,48
+North Carolina,38
+South Carolina,42
+Georgia,34
+Florida,36
+Kentucky,44
+Tennessee,40
+Alabama,45
+Mississippi,49
+Arkansas,47
+Louisiana,50
+Oklahoma,43
+Texas,4
+Montana,31
+Idaho,18
+Wyoming,30
+Colorado,11
+New Mexico,46
+Arizona,27
+Utah,7
+Nevada,32
+Washington,5
+Oregon,23
+California,24
+Alaska,4
+Hawaii,6

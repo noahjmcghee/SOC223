@@ -1,0 +1,275 @@
+---
+
+# Cost of War
+
+
+
+#### Noah McGhee
+
+### Introduction
+War and conflict are costly endeaevors. Primarily, the loss of life can not be neglected, however, in this study we will focus on the cost of militirization and how changes in militray spending relate to engagement in conflict. Using data from the Stockholm International Peace Reasearch Institute and the Department of Peace and Conflict Reaearch at Uppsala University in Sweden, information regarding military expenditure and conflict tracing, respectively, we will explore the relationship between them. The data was spliced by common years (1961-2018) and organized by country. Militay expenditure is in current USD.
+
+---
+```{r pic, echo=FALSE, out.width = '25%'}
+knitr::include_graphics("/Users/noahjmcghee/Desktop/mt.jpeg")
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+#| echo: false
+#| message: false
+#| warning: false
+```
+
+```{r message=FALSE, warning=FALSE}
+#DATA - this data took a lot of wrangling and some of the more difficult functions had to be done with excel/python. the final data set is cs_final
+#| echo: false
+#| message: false
+library(tidyverse)
+library(broom)
+library(moderndive)
+library(ggeffects)
+library(janitor)
+library(reshape2)
+library(modelsummary)
+
+#Military expenditure data
+mil_exp <- read.csv("/Users/noahjmcghee/Desktop/mil_exp.csv", check.names = FALSE)
+mil_exp <- select(mil_exp, !"Code")
+mil_exp <- filter(mil_exp, Type == "Country")
+mil_exp <- select(mil_exp, !"Type")
+mil_exp <- pivot_longer(mil_exp, !Name)
+names(mil_exp)[1] <- "country"
+names(mil_exp)[2] <- "year"
+names(mil_exp)[3] <- "mil_exp_usd"
+
+#Conflict data
+conflict <- read.csv("/Users/noahjmcghee/Desktop/conflict.csv")
+conflict <- pivot_longer(conflict,side_a)
+conflict <- select(conflict, "value", "region", "year")
+names(conflict)[1] <- "country"
+conflict <- group_by(conflict, year)
+conflict <- dcast(conflict, country ~ year, value.var = "year" )
+conflict <- mutate_if(conflict, is.numeric, ~1 * (. > 0))
+conflict <- conflict %>% mutate(percent_in_conflict = (rowSums(select_if(., is.numeric)))/57)
+
+conflict[6,1] = " Australia"
+conflict <- filter(conflict, country != " Egypt,  Iraq,  Jordan,  Lebanon,  Syria")
+
+conflict <- pivot_longer(conflict, cols = !country & !percent_in_conflict)
+
+conflict <- select(conflict, country, name, value, percent_in_conflict)
+conflict <- filter(conflict, name >= 1960 & name <= 2018)
+conflict <- mutate_if(conflict, is.character, str_trim)
+names(conflict)[2] <- "year"
+names(conflict)[3] <- "in_conflict"
+conflict$country <- replace(conflict$country, conflict$country == "United States of America", "United States")
+
+#Combining data sets
+mil_exp <- filter(mil_exp, country %in% conflict$country)
+cs <- merge(conflict, mil_exp)
+write.csv(cs, "/Users/noahjmcghee/Desktop/cs.csv", row.names=FALSE)
+
+#Fixed Data
+cs_fixed <- read.csv("/Users/noahjmcghee/Desktop/cs_altered.csv")
+cs_fixed <- select(cs_fixed, country, year, in_conflict, mil_exp_usd, delta_exp, percent_in_conflict)
+write.csv(cs_fixed, "/Users/noahjmcghee/Desktop/csdata.csv", row.names=FALSE)
+
+cs_final <- read.csv("/Users/noahjmcghee/Desktop/csfinal.csv")
+cs_final <- mutate(cs_final, per_in_conflict = per_in_conflict * 100)
+cs_final <- filter(cs_final, mil_exp_usd != 0)
+cs_final <- filter(cs_final, year != 1960)
+```
+
+### A Look at the Data
+```{r message=FALSE, warning=FALSE}
+AFG <- filter(cs_final, country == "Afghanistan")
+USA <- filter(cs_final, country == "United States")
+FRA <- filter(cs_final, country == "France")
+CHI <- filter(cs_final, country == "China")
+RUS <- filter(cs_final, country == "Russian Federation")
+
+years_available <- cs_final %>% dplyr::count(country)
+
+mean_exp_t <- cs_final %>% group_by(country)%>% 
+  summarise(mean_exp=mean(mil_exp_usd),
+            .groups = 'drop')
+some_data <- merge(mean_exp_t, years_available)
+names(some_data)[3] <- "years_with_exp_data"
+
+years_in_conflict <- cs_final %>% group_by(country)%>% 
+  summarise(years_in_conflict=mean(per_in_conflict)*.57,
+            .groups = 'drop')
+some_data <- merge(some_data, years_in_conflict)
+
+some_data <- mutate(some_data, logexp = log(mean_exp))
+
+```
+
+#### Here is an example of the compiled data. This shows the first 5 years of data from Russia.
+```{r message=FALSE, warning=FALSE}
+head(RUS)
+```
+
+#### And here is another example of the same data from China.
+```{r message=FALSE, warning=FALSE}
+head(CHI)
+```
+
+#### A quick analysis of the variables yields the following... 
+
+**(in_conflict)** describes whether the country was engaged in conflict during that year with a (0) representing no, and a (1) representing a yes. 
+
+**(mil_exp_usd)** is the amount of currency, converted to US dollars the country spent of it's military that year.
+
+**(delta_exp)** is the change in the amount spent on a country's military compared to the year prior.
+
+**(per_in_conflict)** is the percent of year in conflict since the start of the data (1961). This value is being used as an analogue for likelihood of conflict. 
+
+
+### Exploring the Data
+
+#### Below are a few examples of some satistics from the data such years in conflict as well as average military expenditure over the time period.
+
+```{r message=FALSE, warning=FALSE}
+head(some_data)
+```
+
+#### Histogram of the log of miltary expenditure 
+
+```{r message=FALSE, warning=FALSE}
+ggplot(some_data, aes(x=logexp)) + 
+  geom_histogram(color="black", fill="white",binwidth = .5)
+```
+
+#### Histogram of years in conflict 
+
+```{r message=FALSE, warning=FALSE}
+ggplot(some_data, aes(x=years_in_conflict)) + 
+  geom_histogram(color="black", fill="white",binwidth = 3)
+```
+
+#### Next, we will take a look at a comparison a of a few countries. The first graph will be of the miltary expenditure ovber the years, overlaid with whether the country is was in conflict.
+
+#### United States
+```{r message=FALSE, warning=FALSE}
+USA <- filter(cs_final, country == "United States")
+
+ggplot(USA,aes(x = year, y =  mil_exp_usd)) +
+        geom_point(alpha = .5) +
+        geom_point(aes(x = year, y = in_conflict * 6e11, color = "red"), show.legend = FALSE)
+
+ggplot(USA,aes(x = year, y =  delta_exp)) +
+        geom_point(alpha = .5) +
+        geom_point(aes(x = year, y = in_conflict * 5e10, color = "red"), show.legend = FALSE)
+                   
+```
+
+
+#### Afghanistan
+```{r message=FALSE, warning=FALSE}
+AFG <- filter(cs_final, country == "Afghanistan")
+
+ggplot(AFG,aes(x = year, y =  mil_exp_usd)) +
+        geom_point(alpha = .5) +
+        geom_point(aes(x = year, y = in_conflict * 3e8, color = "red"), show.legend = FALSE)
+
+ggplot(AFG,aes(x = year, y =  delta_exp)) +
+        geom_point(alpha = .5)+
+        geom_point(aes(x = year, y = in_conflict * 5e7, color = "red"), show.legend = FALSE)
+```
+
+#### France 
+
+```{r message=FALSE, warning=FALSE}
+FRA <- filter(cs_final, country == "France")
+
+ggplot(FRA,aes(x = year, y =  mil_exp_usd)) +
+        geom_point(alpha = .5) +
+        geom_point(aes(x = year, y = in_conflict * 6e10, color = "red"), show.legend = FALSE)
+
+ggplot(FRA,aes(x = year, y =  delta_exp)) +
+        geom_point(alpha = .5)+
+        geom_point(aes(x = year, y = in_conflict * 1e10, color = "red"), show.legend = FALSE)
+```
+
+
+### Applying Linear Regression
+
+#### The variables of the model are as follows...
+
+**(per_in_conflict) - outcome variable ** is the percent of year in conflict since the start of the data (1961). 
+
+**(country) - explanatory variable ** country. 
+
+**(delta_exp) - explanatory variable ** is the change in the amount spent on a country's military compared to the year prior.
+
+**(mil_exp_usd) - explanatory variable ** is the amount of currency, converted to US dollars the country spent of it's military that year.
+
+**(mil_exp_usd^2) - explanatory variable ** the square of mil_exp_usd.
+
+#### The results of the model... 
+
+```{r message=FALSE, warning=FALSE}
+model <- lm(per_in_conflict ~ I(mil_exp_usd^2) + mil_exp_usd + delta_exp + country, data = cs_final)
+model_points <- get_regression_points(model)
+tidy(model)
+
+```
+
+#### The equation of the model...
+
+per_in_conflict = B_0 + B_1 * (mil_exp_usd^2) + B_2 * (mil_exp_usd) + B_3 * (delta_exp) + B_4... * country_1... 
+
+Where each beta after B_3 is country specific
+
+For example, the equation for India would look like...
+
+India : per_in_conflict = 46.21122 + -3.235196e-22 * (mil_exp_usd^2) + 3.118672e-10 * (mil_exp_usd) - 1.652636e-10 * (delta_exp) + -9.156034 * (1)
+
+#### Inference for Regressioin
+
+##### Below we will look at a few of the p values from the model as well as confidence intervals 
+
+```{r message=FALSE, warning=FALSE}
+ir <- head(tidy(model, conf.int = TRUE))
+ir <- select(ir, term, p.value, conf.low, conf.high)
+head(ir)
+```
+All of the p values from the model are below the threshold of .05, therefore we ca reject the null hypothesis that states, there is no correlation between military expenditure, it's change, country, and its percent of years involved in conflict.
+
+#### Residual Analysis
+
+Histogram of residuals from the model
+```{r message=FALSE, warning=FALSE}
+ggplot(model_points, aes(x=residual)) + 
+  geom_histogram(color="black", fill="white",binwidth = .01)
+
+```
+
+Scatterplot of residuals from the model
+```{r message=FALSE, warning=FALSE}
+ggplot(model_points,
+       aes(y = residual,
+           x = per_in_conflict)) +
+  geom_smooth(method = "loess") +
+  geom_jitter(alpha = .5)
+``` 
+
+
+### Conclusion
+
+Overall, the model does find a way to capture a portion of the story regarding war and money. Primarily, we think of spending on a military force to be the product of conflict however we must also loo at it through the lens that a powerful and well funded military is a deterrent for other countries to prompt you with war. Below, we will analyze some benefits and potential problems of the model.
+
+#### Results
+
+Given the p-values of the regression being sufficiently low this model can relatively accurately predict the likelihood that a country is currently in state of conflict. That being said, there is a complex phenomenon appears on the scatterplot of residuals that is telling of an unaccounted for behavior in the model. While there are many other factors that play a role in deciding whether a country is engaged in conflict it has shown that how much money and being placed into the military budget of a country is correlated with their involvement in conflict.
+
+#### Limitations
+
+Some key limitations of the study mostly surround the data. Data that accurately characterizes the kinetics of a country are difficult to produce and verify. That being said, the outcome variable used in the analysis could potentially be misleading to the state the country is in. The current outcome variable of percent in conflict assumes that hostility or volatility is a enduring trait and does not account for peaks of peace. 
+
+#### Citations
+
+https://www.pcr.uu.se/research/ucdp/
+https://www.kaggle.com/datasets/nitinsss/military-expenditure-of-countries-19602019/

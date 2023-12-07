@@ -1,0 +1,51 @@
+﻿rank,state,opp_score
+1,Minnesota,63.100
+2,Vermont,63.000
+3,Iowa,62.600
+4,Massachusetts,60.900
+5,Nebraska,60.500
+6,North Dakota,60.100
+7,Washington,59.300
+8,New Hampshire,59.200
+9,New Jersey,59.000
+10,Connecticut,58.900
+11,Maine,58.000
+12,Wisconsin,57.900
+13,Kansas,57.900
+14,New York,57.400
+15,Virginia,57.000
+16,California,56.700
+17,Hawaii,56.600
+18,Oregon,56.600
+19,South Dakota,56.600
+20,Rhode Island,56.300
+21,Maryland,56.300
+22,Illinois,56.200
+23,Utah,55.800
+24,Montana,54.900
+25,Colorado,54.700
+27,Michigan,53.100
+28,Missouri,52.600
+29,Idaho,52.400
+30,Delaware,52.100
+31,Pennsylvania,51.900
+32,Alaska,51.600
+33,North Carolina,51.400
+34,Indiana,50.800
+35,Wyoming,50.100
+36,Ohio,49.900
+37,Texas,49.800
+38,South Carolina,49.600
+39,Tennessee,49.400
+40,Florida,49.100
+41,Arkansas,48.800
+42,Kentucky,48.600
+43,Arizona,48.500
+44,Georgia,48.300
+45,Alabama,48.000
+46,Oklahoma,47.100
+47,Nevada,46.200
+48,West Virginia,45.300
+49,Mississippi,44.800
+50,Louisiana,43.700
+51,New Mexico,42.400

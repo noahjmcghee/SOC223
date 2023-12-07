@@ -1,0 +1,6 @@
+Army_Males,Army_Females,Army_Total,Navy_Males,Navy_Females,Navy_Total,USMC_Males,USMC_Females,USMC_Total,AF_Males,AF_Females,AF_Total
+Number,50836,11232,62068,28928,9329,38257,28162,3267,31429,23852,7968,31820
+
+
+
+
